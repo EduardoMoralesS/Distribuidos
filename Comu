@@ -65,7 +65,8 @@ proceso_recepcion.start()
 while True:
     print("\n--- Menú ---")
     print("1. Enviar mensaje")
-    print("2. Salir")
+    print("2. Mostrar mensajes recibidos")
+    print("3. Salir")
 
     opcion = input("Seleccione una opción: ")
 
@@ -74,6 +75,14 @@ while True:
         mensaje = input("Introduzca el mensaje: ")
         enviar_mensaje(nodo_destino, mensaje)
     elif opcion == "2":
+        print("\n--- Mensajes Recibidos ---")
+        for mensaje_archivo in os.listdir(directorio_mensajes):
+            ruta_archivo = os.path.join(directorio_mensajes, mensaje_archivo)
+            print(f"--- {mensaje_archivo} ---")
+            with open(ruta_archivo, "r") as archivo:
+                print(archivo.read())
+    elif opcion == "3":
         break
     else:
         print("Opción no válida. Inténtelo de nuevo.")
+

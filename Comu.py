@@ -24,7 +24,7 @@ def enviar_mensaje(nodo_destino, mensaje):
     tiempo_envio = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     # Enviar el mensaje
-    mensaje_completo = f"{tiempo_envio}|{mensaje}"
+    mensaje_completo = f"{tiempo_envio}|{socket.gethostname()}|{mensaje}"
     sock.sendall(mensaje_completo.encode())
 
     # Recibir la respuesta de recibido
@@ -47,15 +47,15 @@ def recibir_mensajes():
         tiempo_recepcion = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         conn.sendall(b"Recibido")
 
-        # Extraer el destinatario y el mensaje del paquete recibido
-        destinatario, mensaje = mensaje_recibido.split("|")
+        # Extraer el remitente, destinatario y el mensaje del paquete recibido
+        remitente, destinatario, mensaje = mensaje_recibido.split("|")
         
         # Almacenar el mensaje en un archivo de texto
         ruta_archivo = os.path.join(directorio_mensajes, f"{destinatario}.txt")
         with open(ruta_archivo, "a") as archivo:
-            archivo.write(f"{tiempo_recepcion} | {mensaje}\n")
+            archivo.write(f"{tiempo_recepcion} | {remitente} -> {mensaje}\n")
 
-        print(f"Mensaje recibido de {destinatario}: {mensaje}")
+        print(f"Mensaje recibido de {remitente} para {destinatario}: {mensaje}")
 
 # Proceso para recibir mensajes en segundo plano
 proceso_recepcion = multiprocessing.Process(target=recibir_mensajes)
@@ -82,6 +82,9 @@ while True:
             with open(ruta_archivo, "r") as archivo:
                 print(archivo.read())
     elif opcion == "3":
+        # Detener el proceso de recepción de mensajes
+        proceso_recepcion.terminate()
+        print("Saliendo del programa...")
         break
     else:
         print("Opción no válida. Inténtelo de nuevo.")

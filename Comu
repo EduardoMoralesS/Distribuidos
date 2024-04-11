@@ -1,0 +1,118 @@
+import socket
+import threading
+import time
+import os
+
+# Directorio para almacenar los mensajes
+MENSAJES_DIR = "mensajes"
+MENSAJES_FILE = os.path.join(MENSAJES_DIR, "mensajes.txt")
+
+# Función para manejar la conexión con un cliente
+def handle_client(client_socket, address, node_id):
+    try:
+        while True:
+            # Recibir mensaje del cliente
+            message = client_socket.recv(1024).decode('utf-8')
+            if not message:
+                break
+
+            # Obtener tiempo del reloj del nodo
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+
+            # Responder automáticamente al cliente
+            response = f"Mensaje recibido: '{message}'. Tiempo del nodo {node_id}: {timestamp}"
+            client_socket.sendall(response.encode('utf-8'))
+
+            # Almacenar mensaje en el archivo
+            with open(MENSAJES_FILE, 'a') as f:
+                f.write(f"Nodo {node_id}: {message} - Tiempo: {timestamp}\n")
+            
+            # Imprimir mensaje recibido en el nodo
+            print(f"Mensaje recibido en Nodo {node_id}: '{message}' - Tiempo: {timestamp}")
+
+    except Exception as e:
+        print(f"Error en Nodo {node_id}: {e}")
+    finally:
+        client_socket.close()
+
+# Función para enviar mensaje a otro nodo
+def send_message(dest_ip, dest_port, message):
+    try:
+        # Crear socket TCP/IP
+        sender_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sender_socket.connect((dest_ip, dest_port))
+
+        # Enviar mensaje al otro nodo
+        sender_socket.sendall(message.encode('utf-8'))
+
+        # Cerrar conexión
+        sender_socket.close()
+    except Exception as e:
+        print(f"Error al enviar mensaje: {e}")
+
+# Función para mostrar los mensajes almacenados
+def show_messages():
+    try:
+        with open(MENSAJES_FILE, 'r') as f:
+            messages = f.read()
+            print("Mensajes almacenados:")
+            print(messages)
+    except FileNotFoundError:
+        print("No hay mensajes almacenados.")
+
+# Crear directorio para almacenar mensajes si no existe
+if not os.path.exists(MENSAJES_DIR):
+    os.makedirs(MENSAJES_DIR)
+
+# Crear archivo de mensajes si no existe
+with open(MENSAJES_FILE, 'a'):
+    pass
+
+# Configuración de red
+HOST = '127.0.0.1'
+PORT_BASE = 5000
+NUM_NODES = 3
+
+# Crear sockets para los nodos
+nodes = []
+for i in range(NUM_NODES):
+    node_id = i + 1
+    node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    node_socket.bind((HOST, PORT_BASE + node_id))
+    node_socket.listen(1)
+    nodes.append((node_id, node_socket))
+
+# Iniciar hilos para manejar la comunicación de cada nodo
+for node_id, node_socket in nodes:
+    threading.Thread(target=handle_client, args=(node_socket.accept()[0], None, node_id)).start()
+
+# Menú de opciones
+while True:
+    print("\nMenu:")
+    print("1. Enviar mensaje")
+    print("2. Mostrar mensajes almacenados")
+    print("3. Salir")
+
+    option = input("Seleccione una opción: ")
+
+    if option == '1':
+        sender_id = int(input(f"Seleccione el nodo emisor (1-{NUM_NODES}): "))
+        dest_id = int(input(f"Seleccione el nodo receptor (1-{NUM_NODES} excepto {sender_id}): "))
+        message = input("Ingrese el mensaje a enviar: ")
+
+        if sender_id < 1 or sender_id > NUM_NODES or dest_id < 1 or dest_id > NUM_NODES or sender_id == dest_id:
+            print("Selección de nodos inválida.")
+            continue
+
+        dest_ip = HOST
+        dest_port = PORT_BASE + dest_id
+
+        # Enviar mensaje al nodo destino
+        send_message(dest_ip, dest_port, message)
+    elif option == '2':
+        show_messages()
+    elif option == '3':
+        print("Saliendo del programa...")
+        break
+    else:
+        print("Opción inválida. Inténtelo de nuevo.")

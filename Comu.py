@@ -7,7 +7,7 @@ import mysql.connector
 config = {
     'user': 'root',  # Reemplaza con tu nombre de usuario de MySQL
     'password': '1234',  # Reemplaza con tu contraseña de MySQL
-    'host': '3306',  # O el host donde se encuentra tu base de datos
+    'host': 'localhost',  # O el host donde se encuentra tu base de datos
     database: 'SOPORTE'  # Reemplaza con el nombre de tu base de datos
 }
 

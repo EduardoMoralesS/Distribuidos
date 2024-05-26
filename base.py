@@ -2,7 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 import random
 
-def insertar_inges(nombre, apellido, email, telefono):
+def insertar_inges(inges):
     try:
         # Establecer la conexión a la base de datos
         connection = mysql.connector.connect(
@@ -34,7 +34,7 @@ def insertar_inges(nombre, apellido, email, telefono):
             connection.close()
             print("Conexión a la base de datos MySQL cerrada")
 
-def insertar_usuarios(nombre, apellido, email, telefono):
+def insertar_usuarios(usuarios):
     try:
         # Establecer la conexión a la base de datos
         connection = mysql.connector.connect(
@@ -186,4 +186,3 @@ for i in range(30):
 insertar_inges(inges)
 # Insertar los datos en la tabla USUARIOS
 insertar_usuarios(usuarios)
-

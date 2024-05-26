@@ -3,7 +3,44 @@ import socket
 import datetime
 import os
 import mysql.connector
+# Configuración de la conexión a la base de datos
+config = {
+    'user': 'root',  # Reemplaza con tu nombre de usuario de MySQL
+    'password': '1234',  # Reemplaza con tu contraseña de MySQL
+    'host': '3306',  # O el host donde se encuentra tu base de datos
+    database: 'SOPORTE'  # Reemplaza con el nombre de tu base de datos
+}
 
+try:
+    # Establecer la conexión
+    connection = mysql.connector.connect(**config)
+
+    # Crear un cursor para interactuar con la base de datos
+    cursor = connection.cursor()
+
+    # Seleccionar una tabla y obtener sus datos
+    cursor.execute("SELECT * FROM INGENIEROS")  # Reemplaza con el nombre de tu tabla
+
+    # Obtener los nombres de las columnas
+    column_names = [i[0] for i in cursor.description]
+
+    # Imprimir los nombres de las columnas
+    print("Columnas:", column_names)
+
+    # Obtener y mostrar todas las filas de la tabla
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row)
+
+except mysql.connector.Error as err:
+    print(f"Error: {err}")
+
+finally:
+    # Cerrar el cursor y la conexión
+    if cursor:
+        cursor.close()
+    if connection:
+        connection.close()
 # Directorio para almacenar los mensajes
 directorio_mensajes = os.path.join(os.path.expanduser("~"), "Escritorio", "Mensajes")
 if not os.path.exists(directorio_mensajes):

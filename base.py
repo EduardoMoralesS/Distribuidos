@@ -141,7 +141,7 @@ usuarios = [
     ('Alicia', 'Mendez', 'alicia.mendez@example.com', '369147852'),
     ('Rafael', 'Romero', 'rafael.romero@example.com', '741963258'),
     ('Angela', 'Navarro', 'angela.navarro@example.com', '852369741'),
-    ('Monica', 'Delgado', 'monica.delgado@example.com', '741369852')
+    ('Monica', 'Delgado', 'monica.delgado@example.com', '741369852'),
     ('Pedro', 'Diaz', 'pedro.diaz@example.com', '852741963'),
     ('Sofia', 'Rodriguez', 'sofia.rodriguez@example.com', '741852963'),
     ('Fernando', 'Torres', 'fernando.torres@example.com', '369258147'),
@@ -161,7 +161,7 @@ usuarios = [
     ('Javier', 'Guzman', 'javier.guzman@example.com', '147963852'),
     ('Rosa', 'Gil', 'rosa.gil@example.com', '258147852'),
     ('Alberto', 'Iglesias', 'alberto.iglesias@example.com', '369258963'),
-    ('Monica', 'Delgado', 'monica.delgado@example.com', '741369852')
+    ('Monica', 'Delgado', 'monica.delgado@example.com', '741369852'),
     ('Isabel', 'Jimenez', 'isabel.jimenez@example.com', '258963147'),
     ('Ricardo', 'Moreno', 'ricardo.moreno@example.com', '369147258'),
     ('Carmen', 'Alvarez', 'carmen.alvarez@example.com', '147258963'),

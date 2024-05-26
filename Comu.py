@@ -2,6 +2,7 @@ import multiprocessing
 import socket
 import datetime
 import os
+import mysql.connector
 
 # Directorio para almacenar los mensajes
 directorio_mensajes = os.path.join(os.path.expanduser("~"), "Escritorio", "Mensajes")
@@ -88,4 +89,26 @@ while True:
         break
     else:
         print("Opción no válida. Inténtelo de nuevo.")
+
+
+# Configura los parámetros de conexión
+config = {
+    user: "root",
+    password: "1234",
+    host: "localhost",
+    database: "SOPORTE"
+}
+
+try:
+    # Crea la conexión
+    connection = mysql.connector.connect(**config)
+
+    if connection.is_connected():
+        print("Conexión exitosa a MySQL")
+
+    # Cierra la conexión
+    connection.close()
+    print("Conexión cerrada")
+except mysql.connector.Error as err:
+    print(f"Error al conectar a la base de datos: {err}")
 

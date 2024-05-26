@@ -2,7 +2,7 @@ import mysql.connector
 from mysql.connector import Error
 import random
 
-def insertar_inges(inges):
+def insertar_inges(nombre, apellido, email, telefono):
     try:
         # Establecer la conexión a la base de datos
         connection = mysql.connector.connect(
@@ -18,24 +18,23 @@ def insertar_inges(inges):
             # Crear la consulta SQL para insertar datos
             insert_query = """INSERT INTO INGENIEROS (nombre, apellido, email, telefono)
                               VALUES (%s, %s, %s, %s)"""
+            record = (nombre, apellido, email, telefono)
             
-            for inge in inges:
-                cursor.execute(insert_query, inge)
-                connection.commit()
-            
-            print("Registros insertados exitosamente en INGENIEROS")
+            # Ejecutar la consulta SQL
+            cursor.execute(insert_query, record)
+            connection.commit()
+            print("Registro insertado exitosamente en INGENIEROS")
     
     except Error as e:
         print("Error al conectar a la base de datos", e)
     
     finally:
-        if 'cursor' in locals() and cursor:
+        if connection.is_connected():
             cursor.close()
-        if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Conexión a la base de datos MySQL cerrada")
 
-def insertar_usuarios(usuarios):
+def insertar_usuarios(nombre, apellido, email, telefono):
     try:
         # Establecer la conexión a la base de datos
         connection = mysql.connector.connect(
@@ -51,24 +50,24 @@ def insertar_usuarios(usuarios):
             # Crear la consulta SQL para insertar datos
             insert_query = """INSERT INTO USUARIOS (nombre, apellido, email, telefono)
                               VALUES (%s, %s, %s, %s)"""
+            record = (nombre, apellido, email, telefono)
             
-            for usuario in usuarios:
-                cursor.execute(insert_query, usuario)
-                connection.commit()
-            
-            print("Registros insertados exitosamente en USUARIOS")
+            # Ejecutar la consulta SQL
+            cursor.execute(insert_query, record)
+            connection.commit()
+            print("Registro insertado exitosamente en USUARIOS")
     
     except Error as e:
         print("Error al conectar a la base de datos", e)
     
     finally:
-        if 'cursor' in locals() and cursor:
+        if connection.is_connected():
             cursor.close()
-        if 'connection' in locals() and connection.is_connected():
             connection.close()
             print("Conexión a la base de datos MySQL cerrada")
 
-def insertar_dispos(nombre, tipo, marca, modelo, usuario_id):
+
+def insertar_dispos(tipo, marca, modelo, usuario_id,nodo):
     try:
         # Establecer la conexión a la base de datos
         connection = mysql.connector.connect(
@@ -82,14 +81,14 @@ def insertar_dispos(nombre, tipo, marca, modelo, usuario_id):
             cursor = connection.cursor()
             
             # Crear la consulta SQL para insertar datos
-            insert_query = """INSERT INTO DISPOSITIVOS (nombre, tipo, marca, modelo, usuario_id)
-                              VALUES (%s, %s, %s, %s, %s)"""
-            record = (nombre, tipo, marca, modelo, usuario_id)
+            insert_query = """INSERT INTO DISPOSITIVO (tipo, marca, modelo, usuario_id,nodo)
+                              VALUES (%s, %s, %s, %i, %i)"""
+            record = (tipo, marca, modelo, usuario_id,nodo)
             
             # Ejecutar la consulta SQL
             cursor.execute(insert_query, record)
             connection.commit()
-            print("Registro insertado exitosamente en DISPOSITIVOS")
+            print("Registro insertado exitosamente en DISPOSITIVO")
     
     except Error as e:
         print("Error al conectar a la base de datos", e)
@@ -101,11 +100,15 @@ def insertar_dispos(nombre, tipo, marca, modelo, usuario_id):
             connection.close()
             print("Conexión a la base de datos MySQL cerrada")
 
+
+
+
+
 # Lista de ingenieros a insertar (30 datos)
 inges = [
-    ('Juan', 'Perez', 'juan.perez@example.com', '123456789'),
-    ('Ana', 'Lopez', 'ana.lopez@example.com', '987654321'),
-    ('Carlos', 'Ramirez', 'carlos.ramirez@example.com', '456123789'),
+    ('Leonardo', 'Arreortua', 'leoA@example.com', '123456789'),
+    ('Eduardo', 'morales', 'EduaM@example.com', '987654321'),
+    ('Diego', 'Saucedo', 'Saucedo.d@example.com', '456123789'),
     ('Maria', 'Garcia', 'maria.garcia@example.com', '789456123'),
     ('Luis', 'Martinez', 'luis.martinez@example.com', '321654987'),
     ('Laura', 'Hernandez', 'laura.hernandez@example.com', '654789321'),
@@ -169,17 +172,18 @@ usuarios = [
     ('Francisco', 'Molina', 'francisco.molina@example.com', '852963741'),
 ]
 
+
+# Generar 30 dispositivos
+for i in range(30):
+    tipo = random.choice(['Laptop', 'Teléfono', 'Tablet', 'Impresora'])
+    marca = random.choice(['Dell', 'HP', 'Apple', 'Samsung'])
+    modelo = "Modelo {i+1}"
+    usuario_id = random.randint(1, 30)  # Selecciona un usuario aleatorio del 1 al 30
+    nodo = random.randint(1, 3)  # Selecciona un nodo aleatorio del 1 al 3
+    insertar_dispos(tipo, marca, modelo, usuario_id,nodo)
+
 # Insertar los datos en la tabla INGENIEROS
 insertar_inges(inges)
 # Insertar los datos en la tabla USUARIOS
 insertar_usuarios(usuarios)
-
-# Generar 30 dispositivos
-for i in range(30):
-    nombre_dispositivo = f"Dispositivo {i+1}"
-    tipo_dispositivo = random.choice(['Laptop', 'Teléfono', 'Tablet', 'Impresora'])
-    marca_dispositivo = random.choice(['Dell', 'HP', 'Apple', 'Samsung'])
-    modelo_dispositivo = f"Modelo {i+1}"
-    usuario_id = random.randint(1, 30)  # Selecciona un usuario aleatorio del 1 al 30
-    insertar_dispos(nombre_dispositivo, tipo_dispositivo, marca_dispositivo, modelo_dispositivo, usuario_id)
 

@@ -76,7 +76,7 @@ def distribuir_dispositivos():
     for nodo in nodos:
         nodo.cerrar_conexion()
 
-distribuir_dispositivo()
+distribuir_dispositivos()
 
 lock = threading.Lock()
 

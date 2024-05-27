@@ -63,20 +63,20 @@ def distribuir_dispositivos():
     
     maestro = next(nodo for nodo in nodos if nodo.es_maestro)
     cursor = maestro.connection.cursor()
-    cursor.execute("SELECT * FROM DISPOSITIVOS")
+    cursor.execute("SELECT * FROM DISPOSITIVO")
     dispositivos = cursor.fetchall()
 
     for i, dispositivo in enumerate(dispositivos):
         sucursal = nodos[i % len(nodos)]
         sucursal_cursor = sucursal.connection.cursor()
-        sucursal_cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+        sucursal_cursor.execute("INSERT INTO DISPOSITIVO (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
         sucursal.connection.commit()
         print(f"Dispositivo {dispositivo[0]} distribuido al nodo {sucursal.id_nodo}")
 
     for nodo in nodos:
         nodo.cerrar_conexion()
 
-distribuir_dispositivos()
+distribuir_dispositivo()
 
 lock = threading.Lock()
 
@@ -127,7 +127,7 @@ def redistribuir_soportes():
                 nodo_activo = random.choice([n for n in nodos if n.connection.is_connected()])
                 nodo_activo.conectar()
                 cursor = nodo_activo.connection.cursor()
-                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+                cursor.execute("INSERT INTO DISPOSITIVO (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
                 nodo_activo.connection.commit()
                 print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
                 nodo_activo.cerrar_conexion()

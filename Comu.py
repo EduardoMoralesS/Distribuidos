@@ -58,26 +58,22 @@ iniciar_eleccion_bully(nodos[0])
 for nodo in nodos:
     print(f"Nodo {nodo.id_nodo} - Maestro: {nodo.es_maestro}")
 
-def distribuir_dispositivos():
+def configurar_replicacion_maestro(nodo_maestro):
     for nodo in nodos:
-        nodo.conectar()
-    
-    maestro = next(nodo for nodo in nodos if nodo.es_maestro)
-    cursor = maestro.connection.cursor()
-    cursor.execute("SELECT * FROM DISPOSITIVOS")
-    dispositivos = cursor.fetchall()
+        if nodo != nodo_maestro:
+            try:
+                nodo.conectar()
+                cursor = nodo.connection.cursor()
+                cursor.execute("STOP SLAVE")
+                cursor.execute(f"CHANGE MASTER TO MASTER_HOST='{nodo_maestro.host}', MASTER_USER='replicacion', MASTER_PASSWORD='password'")
+                cursor.execute("START SLAVE")
+                print(f"Replicación configurada en el nodo {nodo.id_nodo}")
+            except Error as e:
+                print(f"Error al configurar replicación en el nodo {nodo.id_nodo}: {e}")
+            finally:
+                nodo.cerrar_conexion()
 
-    for i, dispositivo in enumerate(dispositivos):
-        sucursal = nodos[i % len(nodos)]
-        sucursal_cursor = sucursal.connection.cursor()
-        sucursal_cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
-        sucursal.connection.commit()
-        print(f"Dispositivo {dispositivo[0]} distribuido al nodo {sucursal.id_nodo}")
-
-    for nodo in nodos:
-        nodo.cerrar_conexion()
-
-distribuir_dispositivos()
+configurar_replicacion_maestro(next(nodo for nodo in nodos if nodo.es_maestro))
 
 lock = threading.Lock()
 
@@ -165,7 +161,7 @@ def menu_ingeniero():
             marca = input("Ingrese la marca del dispositivo: ")
             modelo = input("Ingrese el modelo del dispositivo: ")
             usuario_id = input("Ingrese el ID del usuario: ")
-            nodo_asignado = random.choice(nodos).id_nodo
+            nodo_asignado =             nodo_asignado = random.choice(nodos).id_nodo
             nodo_activo = random.choice(nodos)
             nodo_activo.conectar()
             cursor = nodo_activo.connection.cursor()
@@ -241,3 +237,4 @@ def menu_principal():
 
 if __name__ == "__main__":
     menu_principal()
+

@@ -69,7 +69,7 @@ def distribuir_dispositivos():
     for i, dispositivo in enumerate(dispositivos):
         sucursal = nodos[i % len(nodos)]
         sucursal_cursor = sucursal.connection.cursor()
-        sucursal_cursor.execute("INSERT INTO DISPOSITIVO (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+        sucursal_cursor.execute("INSERT INTO DISPOSITIVO (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %i, %i)", dispositivo)
         sucursal.connection.commit()
         print(f"Dispositivo {dispositivo[0]} distribuido al nodo {sucursal.id_nodo}")
 

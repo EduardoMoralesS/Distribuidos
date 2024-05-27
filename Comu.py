@@ -1,10 +1,9 @@
-
 import random
 import threading
 from mysql.connector import connect, Error
 
 class Nodo:
-    def __init__(self, id_nodo, host, user, password):
+    def _init_(self, id_nodo, host, user, password):
         self.id_nodo = id_nodo
         self.host = host
         self.user = user
@@ -133,4 +132,110 @@ def redistribuir_soportes():
                 print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
                 nodo_activo.cerrar_conexion()
 
-redistribuir_soportes()
+def menu_usuario():
+    while True:
+        print("\nMenu Usuario:")
+        print("1. Levantar Ticket")
+        print("2. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            id_usuario = input("Ingrese su ID de usuario: ")
+            id_dispositivo = input("Ingrese el ID del dispositivo: ")
+            levantar_ticket(id_usuario, id_dispositivo)
+        elif opcion == "2":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
+
+def menu_ingeniero():
+    while True:
+        print("\nMenu Ingeniero:")
+        print("1. Agregar Ticket")
+        print("2. Agregar Dispositivo")
+        print("3. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            id_usuario = input("Ingrese el ID de usuario: ")
+            id_dispositivo = input("Ingrese el ID del dispositivo: ")
+            levantar_ticket(id_usuario, id_dispositivo)
+        elif opcion == "2":
+            tipo = input("Ingrese el tipo de dispositivo: ")
+            marca = input("Ingrese la marca del dispositivo: ")
+            modelo = input("Ingrese el modelo del dispositivo: ")
+            usuario_id = input("Ingrese el ID del usuario: ")
+            nodo_asignado = random.choice(nodos).id_nodo
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
+                           (tipo, marca, modelo, usuario_id, nodo_asignado))
+            nodo_activo.connection.commit()
+            nodo_activo.cerrar_conexion()
+            print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
+        elif opcion == "3":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
+
+def menu_sucursal():
+    while True:
+        print("\nMenu Sucursal:")
+        print("1. Consultar Usuarios")
+        print("2. Actualizar Lista de Usuarios")
+        print("3. Levantar Ticket")
+        print("4. Cerrar Ticket")
+        print("5. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("SELECT * FROM USUARIOS")
+            usuarios = cursor.fetchall()
+            for usuario in usuarios:
+                print(usuario)
+            nodo_activo.cerrar_conexion()
+        elif opcion == "2":
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            id_usuario = input("Ingrese el ID del usuario: ")
+            nombre = input("Ingrese el nombre del usuario: ")
+            correo = input("Ingrese el correo del usuario: ")
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
+            nodo_activo.connection.commit()
+            nodo_activo.cerrar_conexion()
+            print("Usuario actualizado correctamente")
+        elif opcion == "3":
+            id_usuario = input("Ingrese el ID de usuario: ")
+            id_dispositivo = input("Ingrese el ID del dispositivo: ")
+            levantar_ticket(id_usuario, id_dispositivo)
+        elif opcion == "4":
+            id_ticket = input("Ingrese el ID del ticket: ")
+            cerrar_ticket(id_ticket)
+        elif opcion == "5":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
+
+def menu_principal():
+    while True:
+        print("\nMenu Principal:")
+        print("1. Usuario")
+        print("2. Ingeniero")
+        print("3. Sucursal")
+        print("4. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            menu_usuario()
+        elif opcion == "2":
+            menu_ingeniero()
+        elif opcion == "3":
+            menu_sucursal()
+        elif opcion == "4":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
+
+if _name_ == "_main_":
+    menu_principal()

@@ -31,11 +31,11 @@ class Nodo:
             self.connection.close()
             print(f"Conexión cerrada con el nodo {self.id_nodo}")
 
-# Configuración de direcciones IP para cada nodo
+# Configuración de direcciones IP para cada nodo (VMs)
 nodos = [
-    Nodo(1, '192.168.1.101', 'root', '1234'),
-    Nodo(2, '192.168.1.102', 'root', '1234'),
-    Nodo(3, '192.168.1.103', 'root', '1234')
+    Nodo(1, '192.168.142.130', 'root', '1234'),  # Nodo 1 en VM 1
+    Nodo(2, '192.168.142.134', 'root', '1234'),  # Nodo 2 en VM 2
+    Nodo(3, '192.168.142.135', 'root', '1234')   # Nodo 3 en VM 3
 ]
 
 def iniciar_eleccion_bully(nodo_iniciador):
@@ -128,7 +128,8 @@ def redistribuir_soportes():
                 nodo_activo = random.choice([n for n in nodos if n.connection.is_connected()])
                 nodo_activo.conectar()
                 cursor = nodo_activo.connection.cursor()
-                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
+ dispositivo)
                 nodo_activo.connection.commit()
                 print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
                 nodo_activo.cerrar_conexion()
@@ -156,98 +157,87 @@ def menu_ingeniero():
         print("3. Salir")
         opcion = input("Seleccione una opción: ")
         if opcion == "1":
-            id_usuario = input("Ingrese el ID deusuario: ")
-id_dispositivo = input("Ingrese el ID del dispositivo: ")
-levantar_ticket(id_usuario, id_dispositivo)
-else 
-if opcion == "2":
-tipo = input("Ingrese el tipo de dispositivo: ")
-marca = input("Ingrese la marca del dispositivo: ")
-modelo = input("Ingrese el modelo del dispositivo: ")
-usuario_id = input("Ingrese el ID del usuario: ")
-nodo_asignado = random.choice(nodos).id_nodo
-nodo_activo = random.choice(nodos)
-nodo_activo.conectar()
-cursor = nodo_activo.connection.cursor()
-cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
-(tipo, marca, modelo, usuario_id, nodo_asignado))
-nodo_activo.connection.commit()
-nodo_activo.cerrar_conexion()
-print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
-
-else 
-if opcion == "3":
-break
-else:
-print("Opción no válida, por favor intente de nuevo.")
+            id_usuario = input("Ingrese el ID de usuario: ")
+            id_dispositivo = input("Ingrese el ID del dispositivo: ")
+            levantar_ticket(id_usuario, id_dispositivo)
+        elif opcion == "2":
+            tipo = input("Ingrese el tipo de dispositivo: ")
+            marca = input("Ingrese la marca del dispositivo: ")
+            modelo = input("Ingrese el modelo del dispositivo: ")
+            usuario_id = input("Ingrese el ID del usuario: ")
+            nodo_asignado = random.choice(nodos).id_nodo
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
+                           (tipo, marca, modelo, usuario_id, nodo_asignado))
+            nodo_activo.connection.commit()
+            nodo_activo.cerrar_conexion()
+            print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
+        elif opcion == "3":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
 
 def menu_sucursal():
-while True:
-print("\nMenú Sucursal:")
-print("1. Consultar Usuarios")
-print("2. Actualizar Lista de Usuarios")
-print("3. Levantar Ticket")
-print("4. Cerrar Ticket")
-print("5. Salir")
-opcion = input("Seleccione una opción: ")
-if opcion == "1":
-nodo_activo = random.choice(nodos)
-nodo_activo.conectar()
-cursor = nodo_activo.connection.cursor()
-cursor.execute("SELECT * FROM USUARIOS")
-usuarios = cursor.fetchall()
-for usuario in usuarios:
-print(usuario)
-nodo_activo.cerrar_conexion()
-else 
-if opcion == "2":
-nodo_activo = random.choice(nodos)
-nodo_activo.conectar()
-id_usuario = input("Ingrese el ID del usuario: ")
-nombre = input("Ingrese el nombre del usuario: ")
-correo = input("Ingrese el correo del usuario: ")
-cursor = nodo_activo.connection.cursor()
-cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
-nodo_activo.connection.commit()
-nodo_activo.cerrar_conexion()
-print("Usuario actualizado correctamente")
-else
-if opcion == "3":
-id_usuario = input("Ingrese el ID de usuario: ")
-id_dispositivo = input("Ingrese el ID del dispositivo: ")
-levantar_ticket(id_usuario, id_dispositivo)
-else 
-if opcion == "4":
-id_ticket = input("Ingrese el ID del ticket: ")
-cerrar_ticket(id_ticket)
-else
-if opcion == "5":
-break
-else:
-print("Opción no válida, por favor intente de nuevo.")
+    while True:
+        print("\nMenú Sucursal:")
+        print("1. Consultar Usuarios")
+        print("2. Actualizar Lista de Usuarios")
+        print("3. Levantar Ticket")
+        print("4. Cerrar Ticket")
+        print("5. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("SELECT * FROM USUARIOS")
+            usuarios = cursor.fetchall()
+            for usuario in usuarios:
+                print(usuario)
+            nodo_activo.cerrar_conexion()
+        elif opcion == "2":
+            nodo_activo = random.choice(nodos)
+            nodo_activo.conectar()
+            id_usuario = input("Ingrese el ID del usuario: ")
+            nombre = input("Ingrese el nombre del usuario: ")
+            correo = input("Ingrese el correo del usuario: ")
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
+            nodo_activo.connection.commit()
+            nodo_activo.cerrar_conexion()
+            print("Usuario actualizado correctamente")
+        elif opcion == "3":
+            id_usuario = input("Ingrese el ID de usuario: ")
+            id_dispositivo = input("Ingrese el ID del dispositivo: ")
+            levantar_ticket(id_usuario, id_dispositivo)
+        elif opcion == "4":
+            id_ticket = input("Ingrese el ID del ticket: ")
+            cerrar_ticket(id_ticket)
+        elif opcion == "5":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
 
 def menu_principal():
-while True:
-print("\nMenú Principal:")
-print("1. Usuario")
-print("2. Ingeniero")
-print("3. Sucursal")
-print("4. Salir")
-opcion = input("Seleccione una opción: ")
-if opcion == "1":
-menu_usuario()
-else
-if opcion == "2":
-menu_ingeniero()
-else
-if opcion == "3":
-menu_sucursal()
-else
-if opcion == "4":
-break
-else:
-print("Opción no válida, por favor intente de nuevo.")
+    while True:
+        print("\nMenú Principal:")
+        print("1. Usuario")
+        print("2. Ingeniero")
+        print("3. Sucursal")
+        print("4. Salir")
+        opcion = input("Seleccione una opción: ")
+        if opcion == "1":
+            menu_usuario()
+        elif opcion == "2":
+            menu_ingeniero()
+        elif opcion == "3":
+            menu_sucursal()
+        elif opcion == "4":
+            break
+        else:
+            print("Opción no válida, por favor intente de nuevo.")
 
-if name == "main":
-menu_principal()
-
+if __name__ == "__main__":
+    menu_principal()

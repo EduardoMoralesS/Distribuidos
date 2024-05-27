@@ -3,7 +3,7 @@ import threading
 from mysql.connector import connect, Error
 
 class Nodo:
-    def _init_(self, id_nodo, host, user, password):
+    def __init__(self, id_nodo, host, user, password):  # Fixed constructor definition
         self.id_nodo = id_nodo
         self.host = host
         self.user = user
@@ -235,6 +235,5 @@ def menu_principal():
         else:
             print("Opción no válida, por favor intente de nuevo.")
 
-if _name_ == "_main_":
-    menu_principal()
-
+if __name__ == "__main__":
+    menu_principal()   # Fixed main entry point check

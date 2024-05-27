@@ -3,7 +3,7 @@ import threading
 from mysql.connector import connect, Error
 
 class Nodo:
-    def __init__(self, id_nodo, host, user, password):
+    def _init_(self, id_nodo, host, user, password):
         self.id_nodo = id_nodo
         self.host = host
         self.user = user
@@ -125,7 +125,7 @@ def redistribuir_soportes():
                 nodo_activo.conectar()
                 cursor = nodo_activo.connection.cursor()
                 cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
- dispositivo)
+                               dispositivo)
                 nodo_activo.connection.commit()
                 print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
                 nodo_activo.cerrar_conexion()
@@ -161,7 +161,7 @@ def menu_ingeniero():
             marca = input("Ingrese la marca del dispositivo: ")
             modelo = input("Ingrese el modelo del dispositivo: ")
             usuario_id = input("Ingrese el ID del usuario: ")
-            nodo_asignado =             nodo_asignado = random.choice(nodos).id_nodo
+            nodo_asignado = random.choice(nodos).id_nodo
             nodo_activo = random.choice(nodos)
             nodo_activo.conectar()
             cursor = nodo_activo.connection.cursor()
@@ -235,6 +235,6 @@ def menu_principal():
         else:
             print("Opción no válida, por favor intente de nuevo.")
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     menu_principal()
 

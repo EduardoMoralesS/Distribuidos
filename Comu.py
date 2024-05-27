@@ -23,8 +23,10 @@ class Nodo:
             )
             if self.connection.is_connected():
                 print(f"Conexión establecida con el nodo {self.id_nodo}")
+                return True
         except Error as e:
             print(f"Error al conectar con el nodo {self.id_nodo}: {e}")
+        return False
 
     def cerrar_conexion(self):
         if self.connection and self.connection.is_connected():
@@ -64,63 +66,70 @@ lock = threading.Lock()
 
 def levantar_ticket(id_usuario, id_dispositivo):
     lock.acquire()
+    nodo_activo = None
     try:
         # Verificar si ya hay un ticket para este dispositivo
         for nodo in nodos:
-            nodo.conectar()
-            cursor = nodo.connection.cursor()
-            cursor.execute("SELECT COUNT(*) FROM TICKETS WHERE id_dispositivo = %s", (id_dispositivo,))
-            cantidad_tickets = cursor.fetchone()[0]
-            nodo.cerrar_conexion()
-            if cantidad_tickets > 0:
-                print("Ya hay un ticket abierto para este dispositivo.")
-                return
+            if nodo.conectar():
+                cursor = nodo.connection.cursor()
+                cursor.execute("SELECT COUNT(*) FROM TICKETS WHERE id_dispositivo = %s", (id_dispositivo,))
+                cantidad_tickets = cursor.fetchone()[0]
+                nodo.cerrar_conexion()
+                if cantidad_tickets > 0:
+                    print("Ya hay un ticket abierto para este dispositivo.")
+                    return
 
         # Encontrar la sucursal con la menor carga de trabajo
         id_sucursal_minima = min(carga_trabajo_por_sucursal, key=carga_trabajo_por_sucursal.get)
 
         # Conectar con la sucursal seleccionada
         nodo_activo = next(nodo for nodo in nodos if nodo.id_nodo == id_sucursal_minima)
-        nodo_activo.conectar()
-        cursor = nodo_activo.connection.cursor()
+        if nodo_activo.conectar():
+            cursor = nodo_activo.connection.cursor()
 
-        # Seleccionar un ingeniero disponible al azar
-        cursor.execute("SELECT id_ingeniero FROM INGENIEROS WHERE disponible = 1 ORDER BY RAND() LIMIT 1")
-        id_ingeniero = cursor.fetchone()[0]
+            # Seleccionar un ingeniero disponible al azar
+            cursor.execute("SELECT id_ingeniero FROM INGENIEROS WHERE disponible = 1 ORDER BY RAND() LIMIT 1")
+            id_ingeniero = cursor.fetchone()[0]
 
-        # Obtener el siguiente ID de ticket
-        cursor.execute("SELECT MAX(id_ticket) FROM TICKETS")
-        max_id_ticket = cursor.fetchone()[0] or 0
-        id_ticket = max_id_ticket + 1
+            # Obtener el siguiente ID de ticket
+            cursor.execute("SELECT MAX(id_ticket) FROM TICKETS")
+            max_id_ticket = cursor.fetchone()[0] or 0
+            id_ticket = max_id_ticket + 1
 
-        # Insertar el ticket en la base de datos
-        folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
-        cursor.execute("INSERT INTO TICKETS (id_usuario, id_dispositivo, id_ingeniero, folio) VALUES (%s, %s, %s, %s)",
-                       (id_usuario, id_dispositivo, id_ingeniero, folio))
-        nodo_activo.connection.commit()
-        print(f"Ticket {folio} levantado en nodo {nodo_activo.id_nodo}")
+            # Insertar el ticket en la base de datos
+            folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
+            cursor.execute("INSERT INTO TICKETS (id_usuario, id_dispositivo, id_ingeniero, folio) VALUES (%s, %s, %s, %s)",
+                           (id_usuario, id_dispositivo, id_ingeniero, folio))
+            nodo_activo.connection.commit()
+            print(f"Ticket {folio} levantado en nodo {nodo_activo.id_nodo}")
 
-        # Actualizar la carga de trabajo de la sucursal
-        carga_trabajo_por_sucursal[id_sucursal_minima] += 1
+            # Actualizar la carga de trabajo de la sucursal
+            carga_trabajo_por_sucursal[id_sucursal_minima] += 1
+        else:
+            print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para levantar el ticket.")
     except Error as e:
         print(f"Error al levantar ticket: {e}")
     finally:
-        nodo_activo.cerrar_conexion()
+        if nodo_activo and nodo_activo.connection and nodo_activo.connection.is_connected():
+            nodo_activo.cerrar_conexion()
         lock.release()
 
 def cerrar_ticket(id_ticket):
     lock.acquire()
+    nodo_activo = random.choice(nodos)
     try:
-        nodo_activo = random.choice(nodos)
-        nodo_activo.conectar()
-        cursor = nodo_activo.connection.cursor()
-        cursor.execute("DELETE FROM TICKETS WHERE id_ticket = %s", (id_ticket,))
-        nodo_activo.connection.commit()
-        print(f"Ticket {id_ticket} cerrado en nodo {nodo_activo.id_nodo}")
+        if nodo_activo.conectar():
+            cursor = nodo_activo.connection.cursor()
+            cursor.execute("DELETE FROM TICKETS WHERE id_ticket = %s", (id_ticket,))
+            nodo_activo.connection.commit()
+            print(f"Ticket {id_ticket} cerrado en nodo {nodo_activo.id_nodo}")
+        else:
+            print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para cerrar el ticket.")
     except Error as e:
         print(f"Error al cerrar ticket: {e}")
     finally:
-        nodo_activo.cerrar_conexion()
+        if nodo_activo.connection and nodo_activo.connection.is_connected():
+            nodo_activo.cerrar_conexion()
         lock.release()
 
 def menu_usuario():
@@ -156,13 +165,15 @@ def menu_ingeniero():
             usuario_id = input("Ingrese el ID del usuario: ")
             nodo_asignado = random.choice(nodos).id_nodo
             nodo_activo = random.choice(nodos)
-            nodo_activo.conectar()
-            cursor = nodo_activo.connection.cursor()
-            cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
-                           (tipo, marca, modelo, usuario_id, nodo_asignado))
-            nodo_activo.connection.commit()
-            nodo_activo.cerrar_conexion()
-            print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
+            if nodo_activo.conectar():
+                cursor = nodo_activo.connection.cursor()
+                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
+                               (tipo, marca, modelo, usuario_id, nodo_asignado))
+                nodo_activo.connection.commit()
+                nodo_activo.cerrar_conexion()
+                print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
+            else:
+                print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para agregar el dispositivo.")
         elif opcion == "3":
             break
         else:
@@ -179,24 +190,28 @@ def menu_sucursal():
         opcion = input("Seleccione una opción: ")
         if opcion == "1":
             nodo_activo = random.choice(nodos)
-            nodo_activo.conectar()
-            cursor = nodo_activo.connection.cursor()
-            cursor.execute("SELECT * FROM USUARIOS")
-            usuarios = cursor.fetchall()
-            for usuario in usuarios:
-                print(usuario)
-            nodo_activo.cerrar_conexion()
+            if nodo_activo.conectar():
+                cursor = nodo_activo.connection.cursor()
+                cursor.execute("SELECT * FROM USUARIOS")
+                usuarios = cursor.fetchall()
+                for usuario in usuarios:
+                    print(usuario)
+                nodo_activo.cerrar_conexion()
+            else:
+                print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para consultar usuarios.")
         elif opcion == "2":
             nodo_activo = random.choice(nodos)
-            nodo_activo.conectar()
-            id_usuario = input("Ingrese el ID del usuario: ")
-            nombre = input("Ingrese el nombre del usuario: ")
-            correo = input("Ingrese el correo del usuario: ")
-            cursor = nodo_activo.connection.cursor()
-            cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
-            nodo_activo.connection.commit()
-            nodo_activo.cerrar_conexion()
-            print("Usuario actualizado correctamente")
+            if nodo_activo.conectar():
+                id_usuario = input("Ingrese el ID del usuario: ")
+                nombre = input("Ingrese el nombre del usuario: ")
+                correo = input("Ingrese el correo del usuario: ")
+                cursor = nodo_activo.connection.cursor()
+                cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
+                nodo_activo.connection.commit()
+                nodo_activo.cerrar_conexion()
+                print("Usuario actualizado correctamente")
+            else:
+                print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para actualizar usuario.")
         elif opcion == "3":
             id_usuario = input("Ingrese el ID de usuario: ")
             id_dispositivo = input("Ingrese el ID del dispositivo: ")
@@ -230,3 +245,4 @@ def menu_principal():
 
 if __name__ == "__main__":
     menu_principal()
+

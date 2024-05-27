@@ -3,7 +3,7 @@ import threading
 from mysql.connector import connect, Error
 
 class Nodo:
-    def __init__(self, id_nodo, host, user, password):  # Fixed constructor definition
+    def __init__(self, id_nodo, host, user, password):
         self.id_nodo = id_nodo
         self.host = host
         self.user = user
@@ -38,11 +38,13 @@ nodos = [
     Nodo(3, '192.168.142.135', 'root', '1234')   # Nodo 3 en VM 3
 ]
 
+# Diccionario para mantener un registro de la carga de trabajo por sucursal
+carga_trabajo_por_sucursal = {nodo.id_nodo: 0 for nodo in nodos}
+
 def iniciar_eleccion_bully(nodo_iniciador):
     nodo_iniciador.termino += 1
     nodo_iniciador.estado = 'candidato'
     candidatos = [nodo for nodo in nodos if nodo.id_nodo > nodo_iniciador.id_nodo]
-
     if not candidatos:
         nodo_iniciador.es_maestro = True
         nodo_iniciador.estado = 'maestro'
@@ -58,44 +60,48 @@ iniciar_eleccion_bully(nodos[0])
 for nodo in nodos:
     print(f"Nodo {nodo.id_nodo} - Maestro: {nodo.es_maestro}")
 
-def configurar_replicacion_maestro(nodo_maestro):
-    for nodo in nodos:
-        if nodo != nodo_maestro:
-            try:
-                nodo.conectar()
-                cursor = nodo.connection.cursor()
-                cursor.execute("STOP SLAVE")
-                cursor.execute(f"CHANGE MASTER TO MASTER_HOST='{nodo_maestro.host}', MASTER_USER='replicacion', MASTER_PASSWORD='password'")
-                cursor.execute("START SLAVE")
-                print(f"Replicación configurada en el nodo {nodo.id_nodo}")
-            except Error as e:
-                print(f"Error al configurar replicación en el nodo {nodo.id_nodo}: {e}")
-            finally:
-                nodo.cerrar_conexion()
-
-configurar_replicacion_maestro(next(nodo for nodo in nodos if nodo.es_maestro))
-
 lock = threading.Lock()
 
 def levantar_ticket(id_usuario, id_dispositivo):
     lock.acquire()
     try:
-        nodo_activo = random.choice(nodos)
+        # Verificar si ya hay un ticket para este dispositivo
+        for nodo in nodos:
+            nodo.conectar()
+            cursor = nodo.connection.cursor()
+            cursor.execute("SELECT COUNT(*) FROM TICKETS WHERE id_dispositivo = %s", (id_dispositivo,))
+            cantidad_tickets = cursor.fetchone()[0]
+            nodo.cerrar_conexion()
+            if cantidad_tickets > 0:
+                print("Ya hay un ticket abierto para este dispositivo.")
+                return
+
+        # Encontrar la sucursal con la menor carga de trabajo
+        id_sucursal_minima = min(carga_trabajo_por_sucursal, key=carga_trabajo_por_sucursal.get)
+
+        # Conectar con la sucursal seleccionada
+        nodo_activo = next(nodo for nodo in nodos if nodo.id_nodo == id_sucursal_minima)
         nodo_activo.conectar()
         cursor = nodo_activo.connection.cursor()
 
-        cursor.execute("SELECT id_ingeniero FROM INGENIEROS ORDER BY RAND() LIMIT 1")
+        # Seleccionar un ingeniero disponible al azar
+        cursor.execute("SELECT id_ingeniero FROM INGENIEROS WHERE disponible = 1 ORDER BY RAND() LIMIT 1")
         id_ingeniero = cursor.fetchone()[0]
 
+        # Obtener el siguiente ID de ticket
         cursor.execute("SELECT MAX(id_ticket) FROM TICKETS")
         max_id_ticket = cursor.fetchone()[0] or 0
         id_ticket = max_id_ticket + 1
-        folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
 
+        # Insertar el ticket en la base de datos
+        folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
         cursor.execute("INSERT INTO TICKETS (id_usuario, id_dispositivo, id_ingeniero, folio) VALUES (%s, %s, %s, %s)",
                        (id_usuario, id_dispositivo, id_ingeniero, folio))
         nodo_activo.connection.commit()
         print(f"Ticket {folio} levantado en nodo {nodo_activo.id_nodo}")
+
+        # Actualizar la carga de trabajo de la sucursal
+        carga_trabajo_por_sucursal[id_sucursal_minima] += 1
     except Error as e:
         print(f"Error al levantar ticket: {e}")
     finally:
@@ -116,19 +122,6 @@ def cerrar_ticket(id_ticket):
     finally:
         nodo_activo.cerrar_conexion()
         lock.release()
-
-def redistribuir_soportes():
-    for nodo in nodos:
-        if not nodo.connection.is_connected():
-            for dispositivo in dispositivos:
-                nodo_activo = random.choice([n for n in nodos if n.connection.is_connected()])
-                nodo_activo.conectar()
-                cursor = nodo_activo.connection.cursor()
-                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)",
-                               dispositivo)
-                nodo_activo.connection.commit()
-                print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
-                nodo_activo.cerrar_conexion()
 
 def menu_usuario():
     while True:
@@ -236,4 +229,4 @@ def menu_principal():
             print("Opción no válida, por favor intente de nuevo.")
 
 if __name__ == "__main__":
-    menu_principal()   # Fixed main entry point check
+    menu_principal()

@@ -1,151 +1,136 @@
-import multiprocessing
-import socket
-import datetime
-import os
-import mysql.connector
-# Configuración de la conexión a la base de datos
-config = {
-    'user': 'root',  # Reemplaza con tu nombre de usuario de MySQL
-    'password': '1234',  # Reemplaza con tu contraseña de MySQL
-    'host': 'localhost',  # O el host donde se encuentra tu base de datos
-    database: 'SOPORTE'  # Reemplaza con el nombre de tu base de datos
-}
 
-try:
-    # Establecer la conexión
-    connection = mysql.connector.connect(**config)
+import random
+import threading
+from mysql.connector import connect, Error
 
-    # Crear un cursor para interactuar con la base de datos
-    cursor = connection.cursor()
+class Nodo:
+    def __init__(self, id_nodo, host, user, password):
+        self.id_nodo = id_nodo
+        self.host = host
+        self.user = user
+        self.password = password
+        self.es_maestro = False
+        self.termino = 0
+        self.estado = 'seguidor'
+        self.connection = None
 
-    # Seleccionar una tabla y obtener sus datos
-    cursor.execute("SELECT * FROM INGENIEROS")  # Reemplaza con el nombre de tu tabla
+    def conectar(self):
+        try:
+            self.connection = connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                database='SOPORTE'
+            )
+            if self.connection.is_connected():
+                print(f"Conexión establecida con el nodo {self.id_nodo}")
+        except Error as e:
+            print(f"Error al conectar con el nodo {self.id_nodo}: {e}")
 
-    # Obtener los nombres de las columnas
-    column_names = [i[0] for i in cursor.description]
+    def cerrar_conexion(self):
+        if self.connection and self.connection.is_connected():
+            self.connection.close()
+            print(f"Conexión cerrada con el nodo {self.id_nodo}")
 
-    # Imprimir los nombres de las columnas
-    print("Columnas:", column_names)
+nodos = [
+    Nodo(1, 'localhost', 'root', '1234'),
+    Nodo(2, 'localhost', 'root', '1234'),
+    Nodo(3, 'localhost', 'root', '1234')
+]
 
-    # Obtener y mostrar todas las filas de la tabla
-    rows = cursor.fetchall()
-    for row in rows:
-        print(row)
+def iniciar_eleccion_bully(nodo_iniciador):
+    nodo_iniciador.termino += 1
+    nodo_iniciador.estado = 'candidato'
+    candidatos = [nodo for nodo in nodos if nodo.id_nodo > nodo_iniciador.id_nodo]
 
-except mysql.connector.Error as err:
-    print(f"Error: {err}")
-
-finally:
-    # Cerrar el cursor y la conexión
-    if cursor:
-        cursor.close()
-    if connection:
-        connection.close()
-# Directorio para almacenar los mensajes
-directorio_mensajes = os.path.join(os.path.expanduser("~"), "Escritorio", "Mensajes")
-if not os.path.exists(directorio_mensajes):
-    os.makedirs(directorio_mensajes)
-
-# Función para enviar mensajes
-def enviar_mensaje(nodo_destino, mensaje):
-    # Crear un socket para la conexión
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # Conectar al nodo destino
-    try:
-        sock.connect((nodo_destino, 5000))
-    except ConnectionRefusedError:
-        print(f"Error: No se pudo conectar al nodo {nodo_destino}.")
-        return
-    
-    # Obtener el timestamp actual
-    tiempo_envio = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # Enviar el mensaje
-    mensaje_completo = f"{tiempo_envio}|{socket.gethostname()}|{mensaje}"
-    sock.sendall(mensaje_completo.encode())
-
-    # Recibir la respuesta de recibido
-    respuesta = sock.recv(1024).decode()
-    print(f"Respuesta de {nodo_destino}: {respuesta}")
-
-    # Cerrar el socket
-    sock.close()
-
-# Función para recibir mensajes
-def recibir_mensajes():
-    # Crear un socket para la recepción
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('0.0.0.0', 5000))
-    sock.listen()
-
-    while True:
-        conn, addr = sock.accept()
-        mensaje_recibido = conn.recv(1024).decode()
-        tiempo_recepcion = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        conn.sendall(b"Recibido")
-
-        # Extraer el remitente, destinatario y el mensaje del paquete recibido
-        remitente, destinatario, mensaje = mensaje_recibido.split("|")
-        
-        # Almacenar el mensaje en un archivo de texto
-        ruta_archivo = os.path.join(directorio_mensajes, f"{destinatario}.txt")
-        with open(ruta_archivo, "a") as archivo:
-            archivo.write(f"{tiempo_recepcion} | {remitente} -> {mensaje}\n")
-
-        print(f"Mensaje recibido de {remitente} para {destinatario}: {mensaje}")
-
-# Proceso para recibir mensajes en segundo plano
-proceso_recepcion = multiprocessing.Process(target=recibir_mensajes)
-proceso_recepcion.start()
-
-# Menú principal
-while True:
-    print("\n--- Menú ---")
-    print("1. Enviar mensaje")
-    print("2. Mostrar mensajes recibidos")
-    print("3. Salir")
-
-    opcion = input("Seleccione una opción: ")
-
-    if opcion == "1":
-        nodo_destino = input("Introduzca el nombre del nodo destino: ")
-        mensaje = input("Introduzca el mensaje: ")
-        enviar_mensaje(nodo_destino, mensaje)
-    elif opcion == "2":
-        print("\n--- Mensajes Recibidos ---")
-        for mensaje_archivo in os.listdir(directorio_mensajes):
-            ruta_archivo = os.path.join(directorio_mensajes, mensaje_archivo)
-            print(f"--- {mensaje_archivo} ---")
-            with open(ruta_archivo, "r") as archivo:
-                print(archivo.read())
-    elif opcion == "3":
-        # Detener el proceso de recepción de mensajes
-        proceso_recepcion.terminate()
-        print("Saliendo del programa...")
-        break
+    if not candidatos:
+        nodo_iniciador.es_maestro = True
+        nodo_iniciador.estado = 'maestro'
+        print(f"Nodo {nodo_iniciador.id_nodo} es el nuevo nodo maestro")
     else:
-        print("Opción no válida. Inténtelo de nuevo.")
+        for candidato in candidatos:
+            if candidato.estado != 'maestro':
+                candidato.estado = 'candidato'
+                iniciar_eleccion_bully(candidato)
 
+iniciar_eleccion_bully(nodos[0])
 
-# Configura los parámetros de conexión
-config = {
-    user: "root",
-    password: "1234",
-    host: "localhost",
-    database: "SOPORTE"
-}
+for nodo in nodos:
+    print(f"Nodo {nodo.id_nodo} - Maestro: {nodo.es_maestro}")
 
-try:
-    # Crea la conexión
-    connection = mysql.connector.connect(**config)
+def distribuir_dispositivos():
+    for nodo in nodos:
+        nodo.conectar()
+    
+    maestro = next(nodo for nodo in nodos if nodo.es_maestro)
+    cursor = maestro.connection.cursor()
+    cursor.execute("SELECT * FROM DISPOSITIVOS")
+    dispositivos = cursor.fetchall()
 
-    if connection.is_connected():
-        print("Conexión exitosa a MySQL")
+    for i, dispositivo in enumerate(dispositivos):
+        sucursal = nodos[i % len(nodos)]
+        sucursal_cursor = sucursal.connection.cursor()
+        sucursal_cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+        sucursal.connection.commit()
+        print(f"Dispositivo {dispositivo[0]} distribuido al nodo {sucursal.id_nodo}")
 
-    # Cierra la conexión
-    connection.close()
-    print("Conexión cerrada")
-except mysql.connector.Error as err:
-    print(f"Error al conectar a la base de datos: {err}")
+    for nodo in nodos:
+        nodo.cerrar_conexion()
 
+distribuir_dispositivos()
+
+lock = threading.Lock()
+
+def levantar_ticket(id_usuario, id_dispositivo):
+    lock.acquire()
+    try:
+        nodo_activo = random.choice(nodos)
+        nodo_activo.conectar()
+        cursor = nodo_activo.connection.cursor()
+
+        cursor.execute("SELECT id_ingeniero FROM INGENIEROS ORDER BY RAND() LIMIT 1")
+        id_ingeniero = cursor.fetchone()[0]
+
+        cursor.execute("SELECT MAX(id_ticket) FROM TICKETS")
+        max_id_ticket = cursor.fetchone()[0] or 0
+        id_ticket = max_id_ticket + 1
+        folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
+
+        cursor.execute("INSERT INTO TICKETS (id_usuario, id_dispositivo, id_ingeniero, folio) VALUES (%s, %s, %s, %s)",
+                       (id_usuario, id_dispositivo, id_ingeniero, folio))
+        nodo_activo.connection.commit()
+        print(f"Ticket {folio} levantado en nodo {nodo_activo.id_nodo}")
+    except Error as e:
+        print(f"Error al levantar ticket: {e}")
+    finally:
+        nodo_activo.cerrar_conexion()
+        lock.release()
+
+def cerrar_ticket(id_ticket):
+    lock.acquire()
+    try:
+        nodo_activo = random.choice(nodos)
+        nodo_activo.conectar()
+        cursor = nodo_activo.connection.cursor()
+        cursor.execute("DELETE FROM TICKETS WHERE id_ticket = %s", (id_ticket,))
+        nodo_activo.connection.commit()
+        print(f"Ticket {id_ticket} cerrado en nodo {nodo_activo.id_nodo}")
+    except Error as e:
+        print(f"Error al cerrar ticket: {e}")
+    finally:
+        nodo_activo.cerrar_conexion()
+        lock.release()
+
+def redistribuir_soportes():
+    for nodo in nodos:
+        if not nodo.connection.is_connected():
+            for dispositivo in dispositivos:
+                nodo_activo = random.choice([n for n in nodos if n.connection.is_connected()])
+                nodo_activo.conectar()
+                cursor = nodo_activo.connection.cursor()
+                cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo) VALUES (%s, %s, %s, %s, %s)", dispositivo)
+                nodo_activo.connection.commit()
+                print(f"Dispositivo {dispositivo[0]} redistribuido al nodo {nodo_activo.id_nodo}")
+                nodo_activo.cerrar_conexion()
+
+redistribuir_soportes()

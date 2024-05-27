@@ -143,7 +143,8 @@ def menu_usuario():
             id_usuario = input("Ingrese su ID de usuario: ")
             id_dispositivo = input("Ingrese el ID del dispositivo: ")
             levantar_ticket(id_usuario, id_dispositivo)
-        else if opcion == "2":
+        else 
+        if opcion == "2":
             break
         else:
             print("Opción no válida, por favor intente de nuevo.")
@@ -159,7 +160,8 @@ def menu_ingeniero():
             id_usuario = input("Ingrese el ID deusuario: ")
 id_dispositivo = input("Ingrese el ID del dispositivo: ")
 levantar_ticket(id_usuario, id_dispositivo)
-else if opcion == "2":
+else 
+if opcion == "2":
 tipo = input("Ingrese el tipo de dispositivo: ")
 marca = input("Ingrese la marca del dispositivo: ")
 modelo = input("Ingrese el modelo del dispositivo: ")
@@ -173,7 +175,9 @@ cursor.execute("INSERT INTO DISPOSITIVOS (tipo, marca, modelo, usuario_id, nodo)
 nodo_activo.connection.commit()
 nodo_activo.cerrar_conexion()
 print(f"Dispositivo {modelo} agregado y asignado al nodo {nodo_asignado}")
-else if opcion == "3":
+
+else 
+if opcion == "3":
 break
 else:
 print("Opción no válida, por favor intente de nuevo.")
@@ -196,7 +200,8 @@ usuarios = cursor.fetchall()
 for usuario in usuarios:
 print(usuario)
 nodo_activo.cerrar_conexion()
-else if opcion == "2":
+else 
+if opcion == "2":
 nodo_activo = random.choice(nodos)
 nodo_activo.conectar()
 id_usuario = input("Ingrese el ID del usuario: ")
@@ -207,14 +212,17 @@ cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (
 nodo_activo.connection.commit()
 nodo_activo.cerrar_conexion()
 print("Usuario actualizado correctamente")
-else if opcion == "3":
+else
+if opcion == "3":
 id_usuario = input("Ingrese el ID de usuario: ")
 id_dispositivo = input("Ingrese el ID del dispositivo: ")
 levantar_ticket(id_usuario, id_dispositivo)
-else if opcion == "4":
+else 
+if opcion == "4":
 id_ticket = input("Ingrese el ID del ticket: ")
 cerrar_ticket(id_ticket)
-else if opcion == "5":
+else
+if opcion == "5":
 break
 else:
 print("Opción no válida, por favor intente de nuevo.")
@@ -229,11 +237,14 @@ print("4. Salir")
 opcion = input("Seleccione una opción: ")
 if opcion == "1":
 menu_usuario()
-else if opcion == "2":
+else
+if opcion == "2":
 menu_ingeniero()
-else if opcion == "3":
+else
+if opcion == "3":
 menu_sucursal()
-else if opcion == "4":
+else
+if opcion == "4":
 break
 else:
 print("Opción no válida, por favor intente de nuevo.")

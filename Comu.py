@@ -143,8 +143,7 @@ def menu_usuario():
             id_usuario = input("Ingrese su ID de usuario: ")
             id_dispositivo = input("Ingrese el ID del dispositivo: ")
             levantar_ticket(id_usuario, id_dispositivo)
-        else 
-        if opcion == "2":
+        else if opcion == "2":
             break
         else:
             print("Opción no válida, por favor intente de nuevo.")

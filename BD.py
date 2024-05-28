@@ -32,7 +32,7 @@ def otorgar_privilegios(host, user, password, user_to_grant, ip_nodo):
 host = 'localhost'  # Cambia esto según sea necesario
 user = 'root'
 password = '1234'
-user_to_grant = 'nodo1'  # El usuario al que quieres otorgar privilegios
+user_to_grant = 'root'  # El usuario al que quieres otorgar privilegios
 ip_nodo = '192.168.30.132'  # La IP desde la cual el usuario se conectará
 
 # Otorgar privilegios
@@ -41,7 +41,7 @@ otorgar_privilegios(host, user, password, user_to_grant, ip_nodo)
 host = 'localhost'  # Cambia esto según sea necesario
 user = 'root'
 password = '1234'
-user_to_grant = 'nodo2'  # El usuario al que quieres otorgar privilegios
+user_to_grant = 'root'  # El usuario al que quieres otorgar privilegios
 ip_nodo = '192.168.30.133'  # La IP desde la cual el usuario se conectará
 
 # Otorgar privilegios
@@ -50,7 +50,7 @@ otorgar_privilegios(host, user, password, user_to_grant, ip_nodo)
 host = 'localhost'  # Cambia esto según sea necesario
 user = 'root'
 password = '1234'
-user_to_grant = 'nodo3'  # El usuario al que quieres otorgar privilegios
+user_to_grant = 'root'  # El usuario al que quieres otorgar privilegios
 ip_nodo = '192.168.30.134'  # La IP desde la cual el usuario se conectará
 
 # Otorgar privilegios

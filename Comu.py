@@ -37,8 +37,8 @@ class Nodo:
 # Configuración de direcciones IP para cada nodo (VMs)
 nodos = [
     Nodo(1, '192.168.30.132', 'root', '1234'),  # Nodo 1 en VM 1
-    Nodo(2, '192.168.142.134', 'root', '1234'),  # Nodo 2 en VM 2
-    Nodo(3, '192.168.142.135', 'root', '1234')   # Nodo 3 en VM 3
+    Nodo(2, '192.168.142.133', 'root', '1234'),  # Nodo 2 en VM 2
+    Nodo(3, '192.168.142.134', 'root', '1234')   # Nodo 3 en VM 3
 ]
 
 # Diccionario para mantener un registro de la carga de trabajo por sucursal

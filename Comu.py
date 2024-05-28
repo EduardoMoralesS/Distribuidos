@@ -15,8 +15,8 @@ class Nodo:
 
     def conectar(self):
         try:
-            host='localhost',
-                user='root',
+            host='host',
+                user='user',
                 password='1234',
                 database='SOPORTE'
             )

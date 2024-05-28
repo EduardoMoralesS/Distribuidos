@@ -1,6 +1,7 @@
+import mysql.connector
+from mysql.connector import Error
 import random
 import threading
-from mysql.connector import connect, Error
 
 class Nodo:
     def __init__(self, id_nodo, host, user, password):
@@ -15,9 +16,10 @@ class Nodo:
 
     def conectar(self):
         try:
-            host='host',
-                user='user',
-                password='1234',
+            self.connection = mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
                 database='SOPORTE'
             )
             if self.connection.is_connected():
@@ -71,7 +73,7 @@ def levantar_ticket(id_usuario, id_dispositivo):
         for nodo in nodos:
             if nodo.conectar():
                 cursor = nodo.connection.cursor()
-                cursor.execute("SELECT COUNT(*) FROM TICKETS WHERE id_dispositivo = %s", (id_dispositivo,))
+                cursor.execute("SELECT COUNT(*) FROM TICKETS WHERE dispositivo_id = %s", (id_dispositivo,))
                 cantidad_tickets = cursor.fetchone()[0]
                 nodo.cerrar_conexion()
                 if cantidad_tickets > 0:
@@ -87,20 +89,14 @@ def levantar_ticket(id_usuario, id_dispositivo):
             cursor = nodo_activo.connection.cursor()
 
             # Seleccionar un ingeniero disponible al azar
-            cursor.execute("SELECT id_ingeniero FROM INGENIEROS WHERE disponible = 1 ORDER BY RAND() LIMIT 1")
+            cursor.execute("SELECT id FROM INGENIEROS ORDER BY RAND() LIMIT 1")
             id_ingeniero = cursor.fetchone()[0]
 
-            # Obtener el siguiente ID de ticket
-            cursor.execute("SELECT MAX(id_ticket) FROM TICKETS")
-            max_id_ticket = cursor.fetchone()[0] or 0
-            id_ticket = max_id_ticket + 1
-
             # Insertar el ticket en la base de datos
-            folio = f"{id_usuario}-{id_ingeniero}-{nodo_activo.id_nodo}-{id_ticket}"
-            cursor.execute("INSERT INTO TICKETS (id_usuario, id_dispositivo, id_ingeniero, folio) VALUES (%s, %s, %s, %s)",
-                           (id_usuario, id_dispositivo, id_ingeniero, folio))
+            cursor.execute("INSERT INTO TICKETS (titulo, descripcion, usuario_id, ingeniero_id, dispositivo_id, estado) VALUES (%s, %s, %s, %s, %s, %s)",
+                           ('Ticket Titulo', 'Descripcion del ticket', id_usuario, id_ingeniero, id_dispositivo, 'Abierto'))
             nodo_activo.connection.commit()
-            print(f"Ticket {folio} levantado en nodo {nodo_activo.id_nodo}")
+            print(f"Ticket levantado en nodo {nodo_activo.id_nodo}")
 
             # Actualizar la carga de trabajo de la sucursal
             carga_trabajo_por_sucursal[id_sucursal_minima] += 1
@@ -119,7 +115,7 @@ def cerrar_ticket(id_ticket):
     try:
         if nodo_activo.conectar():
             cursor = nodo_activo.connection.cursor()
-            cursor.execute("DELETE FROM TICKETS WHERE id_ticket = %s", (id_ticket,))
+            cursor.execute("UPDATE TICKETS SET estado = %s WHERE id = %s", ('Cerrado', id_ticket))
             nodo_activo.connection.commit()
             print(f"Ticket {id_ticket} cerrado en nodo {nodo_activo.id_nodo}")
         else:
@@ -203,16 +199,17 @@ def menu_sucursal():
             if nodo_activo.conectar():
                 id_usuario = input("Ingrese el ID del usuario: ")
                 nombre = input("Ingrese el nombre del usuario: ")
-                correo = input("Ingrese el correo del usuario: ")
+                email = input("Ingrese el correo del usuario: ")
+                telefono = input("Ingrese el telefono del usuario: ")
                 cursor = nodo_activo.connection.cursor()
-                cursor.execute("UPDATE USUARIOS SET nombre=%s, correo=%s WHERE id_usuario=%s", (nombre, correo, id_usuario))
+                cursor.execute("UPDATE USUARIOS SET nombre=%s, email=%s, telefono=%s WHERE id=%s", (nombre, email, telefono, id_usuario))
                 nodo_activo.connection.commit()
                 nodo_activo.cerrar_conexion()
                 print("Usuario actualizado correctamente")
             else:
-                print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para actualizar usuario.")
+                print(f"No se pudo conectar con el nodo {nodo_activo.id_nodo} para actualizar el usuario.")
         elif opcion == "3":
-            id_usuario = input("Ingrese el ID de usuario: ")
+            id_usuario = input("Ingrese su ID de usuario: ")
             id_dispositivo = input("Ingrese el ID del dispositivo: ")
             levantar_ticket(id_usuario, id_dispositivo)
         elif opcion == "4":
@@ -223,7 +220,7 @@ def menu_sucursal():
         else:
             print("Opción no válida, por favor intente de nuevo.")
 
-def menu_principal():
+def main():
     while True:
         print("\nMenú Principal:")
         print("1. Usuario")
@@ -243,5 +240,6 @@ def menu_principal():
             print("Opción no válida, por favor intente de nuevo.")
 
 if __name__ == "__main__":
-    menu_principal()
+    main()
+
 

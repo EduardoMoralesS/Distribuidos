@@ -15,10 +15,9 @@ class Nodo:
 
     def conectar(self):
         try:
-            self.connection = connect(
-                host=self.host,
-                user=self.user,
-                password=self.password,
+            host='localhost',
+                user='root,
+                password='1234',
                 database='SOPORTE'
             )
             if self.connection.is_connected():

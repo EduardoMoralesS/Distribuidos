@@ -13,7 +13,7 @@ def otorgar_privilegios(host, user, password, user_to_grant, ip_nodo):
         if connection.is_connected():
             cursor = connection.cursor()
             grant_privileges_query = f"""
-            GRANT INSTERT ADD SELECT ON *SOPORTE* TO '{user_to_grant}'@'{ip_nodo}' WITH GRANT OPTION;
+            GRANT INSTERT ADD SELECT ON 'SOPORTE' TO '{user_to_grant}'@'{ip_nodo}' WITH GRANT OPTION;
             FLUSH PRIVILEGES;
             """
             cursor.execute(grant_privileges_query)

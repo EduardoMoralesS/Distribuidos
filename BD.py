@@ -13,7 +13,6 @@ def otorgar_privilegios(host, user, password, user_to_grant, ip_nodo):
         if connection.is_connected():
             cursor = connection.cursor()
             grant_privileges_query = f"""
-            CREATE USER '{user_to_grant}'@'{ip_nodo}' IDENTIFIED BY '{password}';
             GRANT ALL PRIVILEGES ON *.* TO '{user_to_grant}'@'{ip_nodo}' WITH GRANT OPTION;
             FLUSH PRIVILEGES;
             """
@@ -27,6 +26,8 @@ def otorgar_privilegios(host, user, password, user_to_grant, ip_nodo):
             cursor.close()
             connection.close()
             print("Conexión a la base de datos MySQL cerrada")
+
+# CREATE USER '{user_to_grant}'@'{ip_nodo}' IDENTIFIED BY '{password}';
 
 # Parámetros de conexión
 host = 'localhost'  # Cambia esto según sea necesario
